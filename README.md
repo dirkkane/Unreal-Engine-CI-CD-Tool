@@ -34,7 +34,7 @@ You can run every option in the tool directly from the command line without laun
 **If you want the tool to exit after running directly from command line, always add the `Quit` option at the end of your arguments to prevent it from landing back at the menu.**
 
 ### Dependencies
-jq - Command line json parsing tool (must be added to path^)
+jq - Command line json parsing tool (must be added to path) <br/>
 7zip - God's chosen file archiver
 
 ### .env Variables
