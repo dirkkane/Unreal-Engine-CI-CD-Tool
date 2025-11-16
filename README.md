@@ -10,7 +10,7 @@ Run `tool.ps1` and select the option you want to run.
 ### Options
 - Run CI/CD -- Fetch latest changes from Git, build the project, archive into a .7z, and publish to GitLab.
 - Build Project -- Build the Unreal project.
-- Publish Build -- Upload latest build to GitLab and publish as release.
+- Publish Latest Build -- Upload latest build to GitLab and publish as release.
 - Pull Latest Commits -- Fetch changes from Git.
 - Revert To Previous Commit -- Reverts project repo to the previous commit.
 - Quit -- Quits the tool.
@@ -19,7 +19,7 @@ You can run every option in the tool directly from the command line without laun
 
 - Run CI/CD -- `cicd`
 - Build Project -- `build`
-- Publish Build -- `publish`
+- Publish Latest Build -- `publish`
 - Pull Latest Commits -- `pull`
 - Revert To Previous Commit -- `revert`
 

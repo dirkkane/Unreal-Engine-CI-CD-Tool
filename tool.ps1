@@ -128,7 +128,7 @@ function Build-Project {
 	# ---------------------------------------------
 	Write-Host "Archiving build as: $BuildName.7z" -ForegroundColor Yellow
 	
-	#cmd.exe /c "C:\Program Files\7-Zip\7z.exe" a -t7z -m0=lzma2 -mx=9 "$BuildName.7z" ".\Windows"
+	cmd.exe /c "C:\Program Files\7-Zip\7z.exe" a -t7z -m0=lzma2 -mx=9 "$BuildName.7z" ".\Windows"
 
 	Write-Host "Archive created as $BuildName.7z" -ForegroundColor Yellow
 
@@ -153,11 +153,26 @@ function Publish-Build {
 	$GitProjectID    = $env:GIT_PROJECT_ID
 
 	# ---------------------------------------------
+	# Get latest build
+	# ---------------------------------------------
+	$LatestBuild = (Get-ChildItem -Path $BuildDir -Filter "*.7z" |
+    	Sort-Object LastWriteTime -Descending |
+    	Select-Object -First 1
+	).BaseName
+
+	Write-Host "Using build: $LatestBuild" -ForegroundColor Yellow
+
+	# ---------------------------------------------
 	# Upload file
 	# ---------------------------------------------
-	curl --location --user "$TokenUsername`:$Token" --upload-file "$BuildDir\$BuildName.7z" "$GitlabPrivateIP/api/v4/projects/$GitProjectID/packages/generic/$BuildName/$BuildName/$BuildName.7z"
+	cmd.exe /c curl --location --user "$TokenUsername^:$Token" --upload-file "$BuildDir\$LatestBuild.7z" "$GitlabPrivateIP/api/v4/projects/$GitProjectID/packages/generic/$LatestBuild/$LatestBuild/$LatestBuild.7z"
 
-	Start-Sleep 1 
+	if ($LASTEXITCODE -ne 0) {
+		throw "Build upload failed."
+	}
+	else {
+		Write-Host "Build upload successful" -ForegroundColor Green
+	}
 }
 function Pull-LatestCommits {
     Write-Output "Pulling latest commits..."
@@ -198,7 +213,7 @@ function Show-Menu {
     Write-Host "Available options:"
     Write-Host "	1 - Run CI/CD (Pull, Build, Publish)"
     Write-Host "	2 - Build Project"
-    Write-Host "	3 - Publish Build"
+    Write-Host "	3 - Publish Latest Build"
     Write-Host "	4 - Pull Latest Commits"
     Write-Host "	5 - Revert To Previous Commit"
     Write-Host "	6 - Quit"
