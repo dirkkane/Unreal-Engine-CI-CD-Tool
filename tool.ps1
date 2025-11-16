@@ -55,6 +55,19 @@ function Build-Project {
 	$timestamp = (Get-Date).ToString("yyyy-MM-dd_HH-mm-ss")
 	
 	# ---------------------------------------------
+	# Check required files
+	# ---------------------------------------------
+	if ($UAT) {
+		throw "Could not find UAT at $UAT"
+	}
+	if ($uproject) {
+		throw "Could not find .uproject at $uproject"
+	}
+	if ($UnrealExe) {
+		throw "Could not find Unreal Executable at $UnrealExe"
+	}
+
+	# ---------------------------------------------
 	# Get short Git hash
 	# ---------------------------------------------
 	Push-Location $RepoDir
