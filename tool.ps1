@@ -134,14 +134,16 @@ function Publish-Build {
 }
 function Pull-LatestCommits {
     Write-Output "Pulling latest commits..."
-	Push-Location $Env.REPO_DIRECTORY
+	Push-Location $env:REPO_DIRECTORY
     git fetch
 	git pull
 	Pop-Location
 }
 function Revert-PreviousCommit {
     Write-Output "Reverting to previous commit..."
-    Start-Sleep 1
+    Push-Location $env:REPO_DIRECTORY
+	git reset --hard HEAD~1
+	Pop-Location
 }
 function Quit-Tool {
     Write-Output "Exiting tool..."
@@ -155,14 +157,15 @@ function Quit-Tool {
 # ================================
 function Show-Menu {
     Clear-Host
-    Write-Host ""
-    Write-Host "  _    _ ______    _____ _____     _______ _____    _______ ____   ____  _      "
-    Write-Host " | |  | |  ____|  / ____|_   _|   / / ____|  __ \  |__   __/ __ \ / __ \| |     "
-    Write-Host " | |  | | |__    | |      | |    / / |    | |  | |    | | | |  | | |  | | |     "
-    Write-Host " | |  | |  __|   | |      | |   / /| |    | |  | |    | | | |  | | |  | | |     "
-    Write-Host " | |__| | |____  | |____ _| |_ / / | |____| |__| |    | | | |__| | |__| | |____ "
-    Write-Host "  \____/|______|  \_____|_____/_/   \_____|_____/     |_|  \____/ \____/|______|"
-    Write-Host ""
+    Write-Host "**********************************************************************************"
+    Write-Host "*  _    _ ______    _____ _____     _______ _____    _______ ____   ____  _      *"
+    Write-Host "* | |  | |  ____|  / ____|_   _|   / / ____|  __ \  |__   __/ __ \ / __ \| |     *"
+    Write-Host "* | |  | | |__    | |      | |    / / |    | |  | |    | | | |  | | |  | | |     *"
+    Write-Host "* | |  | |  __|   | |      | |   / /| |    | |  | |    | | | |  | | |  | | |     *"
+    Write-Host "* | |__| | |____  | |____ _| |_ / / | |____| |__| |    | | | |__| | |__| | |____ *"
+    Write-Host "*  \____/|______|  \_____|_____/_/   \_____|_____/     |_|  \____/ \____/|______|*"
+	Write-Host "*                                                                                *"
+    Write-Host "**********************************************************************************"
     Write-Host "Unreal Engine CI/CD Tool for GitLab"
     Write-Host ""
     Write-Host "Available options:"
