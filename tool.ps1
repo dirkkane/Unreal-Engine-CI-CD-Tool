@@ -57,13 +57,13 @@ function Build-Project {
 	# ---------------------------------------------
 	# Check required files
 	# ---------------------------------------------
-	if ($UAT) {
+	if (-not $UAT) {
 		throw "Could not find UAT at $UAT"
 	}
-	if ($uproject) {
+	if (-not $uproject) {
 		throw "Could not find .uproject at $uproject"
 	}
-	if ($UnrealExe) {
+	if (-not $UnrealExe) {
 		throw "Could not find Unreal Executable at $UnrealExe"
 	}
 
@@ -128,7 +128,7 @@ function Build-Project {
 	# ---------------------------------------------
 	Write-Host "Archiving build as: $BuildName.7z" -ForegroundColor Yellow
 	
-	cmd.exe /c "C:\Program Files\7-Zip\7z.exe" a -t7z -m0=lzma2 -mx=9 "$BuildName.7z" ".\Windows"
+	#cmd.exe /c "C:\Program Files\7-Zip\7z.exe" a -t7z -m0=lzma2 -mx=9 "$BuildName.7z" ".\Windows"
 
 	Write-Host "Archive created as $BuildName.7z" -ForegroundColor Yellow
 
@@ -143,6 +143,20 @@ function Build-Project {
 	}
 function Publish-Build { 
 	Write-Output "Publishing build..." 
+	# ---------------------------------------------
+	# Load variables
+	# ---------------------------------------------
+	$TokenUsername   = $env:TOKEN_USERNAME
+	$Token           = $env:TOKEN
+	$BuildDir        = $env:BUILD_DIRECTORY
+	$GitlabPrivateIP = $env:GITLAB_PRIVATE_IP
+	$GitProjectID    = $env:GIT_PROJECT_ID
+
+	# ---------------------------------------------
+	# Upload file
+	# ---------------------------------------------
+	curl --location --user "$TokenUsername`:$Token" --upload-file "$BuildDir\$BuildName.7z" "$GitlabPrivateIP/api/v4/projects/$GitProjectID/packages/generic/$BuildName/$BuildName/$BuildName.7z"
+
 	Start-Sleep 1 
 }
 function Pull-LatestCommits {
