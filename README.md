@@ -26,7 +26,6 @@ You can run every option in the tool directly from the command line without laun
 (EX: `.\tool.ps1 revert build publish`)
 
 ### Dependencies
-jq - Command line json parsing tool (must be added to path) <br/>
 7zip - God's chosen file archiver
 
 ### .env Variables
