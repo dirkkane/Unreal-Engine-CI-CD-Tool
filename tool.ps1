@@ -37,9 +37,14 @@ if (Test-Path $envFile) {
 # ================================
 function Run-CICD { 
 	Write-Output "Running CI/CD..." 
-	Pull-LatestCommits
-	Build-Project
-	Publish-Build
+	$NewCommits = Pull-LatestCommits
+	if ($NewCommits -eq $true) {
+		Build-Project
+		Publish-Build
+	}
+	else {
+		Write-Host "No new commits available, stopping..." -ForegroundColor Yellow
+	}
 }
 function Build-Project { 
 	# ---------------------------------------------
@@ -52,7 +57,7 @@ function Build-Project {
 	$UAT           = "$UnrealInstall\Engine\Build\BatchFiles\RunUAT.bat"
 	$uproject      = "$RepoDir\$ProjectName.uproject"
 	$UnrealExe     = "$UnrealInstall\Engine\Binaries\Win64\UnrealEditor-Cmd.exe"
-	$timestamp = (Get-Date).ToString("yyyy-MM-dd_HH-mm-ss")
+	$timestamp     = (Get-Date).ToString("yyyy-MM-dd_HH-mm-ss")
 	
 	# ---------------------------------------------
 	# Check required files
@@ -149,8 +154,13 @@ function Publish-Build {
 	$TokenUsername   = $env:TOKEN_USERNAME
 	$Token           = $env:TOKEN
 	$BuildDir        = $env:BUILD_DIRECTORY
+	$GitlabPublicIP  = $env:GITLAB_PUBLIC_IP
 	$GitlabPrivateIP = $env:GITLAB_PRIVATE_IP
 	$GitProjectID    = $env:GIT_PROJECT_ID
+	$GitGroupName    = $env:GIT_GROUP_NAME
+	$GitProjectName  = $env:GIT_PROJECT_NAME
+	$ReleaseDesc = "Automated release via CI/CD"
+	$PackageType = "generic"
 
 	# ---------------------------------------------
 	# Get latest build
@@ -162,24 +172,120 @@ function Publish-Build {
 
 	Write-Host "Using build: $LatestBuild" -ForegroundColor Yellow
 
+	$ReleaseTag = "$LatestBuild"
+	$ReleaseName = "$LatestBuild"
+
+
 	# ---------------------------------------------
-	# Upload file
+	# Upload file 
+	# TODO: REPLACE WITH INVOKE-RESTMETHOD
 	# ---------------------------------------------
-	cmd.exe /c curl --location --user "$TokenUsername^:$Token" --upload-file "$BuildDir\$LatestBuild.7z" "$GitlabPrivateIP/api/v4/projects/$GitProjectID/packages/generic/$LatestBuild/$LatestBuild/$LatestBuild.7z"
+	cmd.exe /c curl --location --user "$TokenUsername^:$Token" --upload-file "$BuildDir\$LatestBuild.7z" "$GitlabPrivateIP/api/v4/projects/$GitProjectID/packages/$PackageType/$LatestBuild/$LatestBuild/$LatestBuild.7z"
 
 	if ($LASTEXITCODE -ne 0) {
 		throw "Build upload failed."
 	}
 	else {
-		Write-Host "Build upload successful" -ForegroundColor Green
+		Write-Host "Build uploaded successfully." -ForegroundColor Green
 	}
+
+	Write-Host "Fetching latest package ID for project $GitProjectID ..."
+
+	# ==============================
+	# Get Latest Package
+	# ==============================
+	$packagesJson = Invoke-RestMethod -Method Get `
+	    -Headers @{ "PRIVATE-TOKEN" = $TOKEN } `
+	    -Uri "$GitlabPrivateIP/api/v4/projects/$GitProjectID/packages?package_type=$PackageType&order_by=created_at&sort=desc&per_page=1" `
+
+	# Extract package ID from JSON
+	$PackageID = $packagesJson[0].id
+
+	if ([string]::IsNullOrWhiteSpace($PackageID)) {
+		throw "Could not retrieve package ID."
+	    exit 1
+	}
+
+	Write-Host "Found latest package ID: $PackageID"
+
+	# ==============================
+	# Get Package File Info
+	# ==============================
+	$filesJson = Invoke-RestMethod -Method Get `
+	    -Headers @{ "PRIVATE-TOKEN" = $TOKEN } `
+	    -Uri "$GitlabPrivateIP/api/v4/projects/$GitProjectID/packages/$PackageID/package_files?order_by=created_at&sort=desc&per_page=1" `
+
+	$PackageFilename = $filesJson[0].file_name
+	$PackageFileID  = $filesJson[0].id
+
+	$PackageURL = "$GitlabPublicIP/$GitGroupName/$GitProjectName/-/package_files/$PackageFileID/download"
+
+	Write-Host "Package file name: $PackageFilename" -ForegroundColor Yellow
+	Write-Host "Package file ID:   $PackageFileID" -ForegroundColor Yellow
+	Write-Host "Package file URL:  $PackageURL" -ForegroundColor Yellow
+
+	# ==============================
+	# Create Release JSON Payload
+	# ==============================
+
+	$releasePayload = @{
+	    name        = $ReleaseName
+	    tag_name    = $ReleaseTag
+	    ref         = "main"
+	    description = $ReleaseDesc
+	    assets      = @{
+	        links = @(
+	            @{
+	                name      = $ReleaseName
+	                url       = $PackageURL
+	                link_type = "other"
+	            }
+	        )
+	    }
+	}
+
+	Write-Host "Creating release '$ReleaseTag'..." -ForegroundColor Yellow
+
+	$releaseJson = Invoke-RestMethod -Method Post `
+	    -Headers @{
+	        "PRIVATE-TOKEN" = $TOKEN
+	        "Content-Type"  = "application/json"
+	    } `
+	    -Uri "$GitlabPrivateIP/api/v4/projects/$GitProjectID/releases" `
+	    -Body ($releasePayload | ConvertTo-Json -Depth 10)
+
+	Write-Host "Created release response:"
+	$releaseJson | ConvertTo-Json -Depth 10
+	Write-Host "Done."
 }
 function Pull-LatestCommits {
-    Write-Output "Pulling latest commits..."
 	Push-Location $env:REPO_DIRECTORY
-    git fetch
-	git pull
-	Pop-Location
+    Write-Output "Pulling latest commits..."
+	# Get current branch name
+	$branch = git rev-parse --abbrev-ref HEAD 2>$null
+	$branch = $branch.Trim()
+
+	if (-not $branch) {
+	    Write-Host "Could not determine current branch." -ForegroundColor Red
+	    return 0
+		Pop-Location
+	}
+
+	# Count how many commits local is behind remote
+	$behind = git rev-list "HEAD..origin/$branch" --count 2>$null
+	$behind = [int]$behind
+
+	if ($behind -gt 0) {
+	    Write-Host "New commits are available on origin/$branch." -ForegroundColor Yellow
+		git fetch
+		git pull
+		Pop-Location
+		return $true
+	} else {
+	    Write-Host "No new commits available." -ForegroundColor Yellow
+	    Pop-Location
+		return $false
+	}
 }
 function Revert-PreviousCommit {
     Write-Output "Reverting to previous commit..."
@@ -211,7 +317,7 @@ function Show-Menu {
     Write-Host "Unreal Engine CI/CD Tool for GitLab"
     Write-Host ""
     Write-Host "Available options:"
-    Write-Host "	1 - Run CI/CD (Pull, Build, Publish)"
+    Write-Host "	1 - Run CI/CD (If New Commits Are Available: Pull, Build, & Publish)"
     Write-Host "	2 - Build Project"
     Write-Host "	3 - Publish Latest Build"
     Write-Host "	4 - Pull Latest Commits"
