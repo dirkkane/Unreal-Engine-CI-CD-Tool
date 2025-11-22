@@ -159,8 +159,8 @@ function Publish-Build {
 	$GitProjectID    = $env:GIT_PROJECT_ID
 	$GitGroupName    = $env:GIT_GROUP_NAME
 	$GitProjectName  = $env:GIT_PROJECT_NAME
-	$ReleaseDesc = "Automated release via CI/CD"
-	$PackageType = "generic"
+	$ReleaseDesc     = "Automated release via CI/CD"
+	$PackageType     = "generic"
 
 	# ---------------------------------------------
 	# Get latest build
@@ -174,7 +174,6 @@ function Publish-Build {
 
 	$ReleaseTag = "$LatestBuild"
 	$ReleaseName = "$LatestBuild"
-
 
 	# ---------------------------------------------
 	# Upload file 
@@ -198,7 +197,9 @@ function Publish-Build {
 	    -Headers @{ "PRIVATE-TOKEN" = $TOKEN } `
 	    -Uri "$GitlabPrivateIP/api/v4/projects/$GitProjectID/packages?package_type=$PackageType&order_by=created_at&sort=desc&per_page=1" `
 
+	# ==============================
 	# Extract package ID from JSON
+	# ==============================
 	$PackageID = $packagesJson[0].id
 
 	if ([string]::IsNullOrWhiteSpace($PackageID)) {
@@ -261,7 +262,9 @@ function Publish-Build {
 function Pull-LatestCommits {
 	Push-Location $env:REPO_DIRECTORY
     Write-Output "Pulling latest commits..."
+	# ==============================
 	# Get current branch name
+	# ==============================
 	$branch = git rev-parse --abbrev-ref HEAD 2>$null
 	$branch = $branch.Trim()
 
@@ -270,8 +273,9 @@ function Pull-LatestCommits {
 	    return 0
 		Pop-Location
 	}
-
+	# ==============================
 	# Count how many commits local is behind remote
+	# ==============================
 	$behind = git rev-list "HEAD..origin/$branch" --count 2>$null
 	$behind = [int]$behind
 
