@@ -85,7 +85,7 @@ function Build-Project {
 	# ---------------------------------------------
 	# Generate build name
 	# ---------------------------------------------
-	$BuildName = "DownedCoral_" + $timestamp + "_" + $hash
+	$BuildName = $ProjectName + "_" + $timestamp + "_" + $hash
 	Write-Host "Build Name: $BuildName" -ForegroundColor Yellow
 	
 	# ---------------------------------------------
