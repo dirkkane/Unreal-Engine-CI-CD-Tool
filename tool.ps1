@@ -304,11 +304,11 @@ function Pull-LatestCommits {
 		git fetch
 		git pull
 		Pop-Location
-		return $true
+		return $true | Out-Null
 	} else {
 	    Write-Host "No new commits available." -ForegroundColor Yellow
 	    Pop-Location
-		return $false
+		return $false | Out-Null
 	}
 }
 function Revert-PreviousCommit {
