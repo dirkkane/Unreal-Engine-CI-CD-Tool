@@ -179,20 +179,40 @@ function Publish-Build {
 	# Upload file 
 	# TODO: REPLACE WITH INVOKE-RESTMETHOD
 	# ---------------------------------------------
-	cmd.exe /c curl --location --user "$TokenUsername^:$Token" --upload-file "$BuildDir\$LatestBuild.7z" "$GitlabPrivateIP/api/v4/projects/$GitProjectID/packages/$PackageType/$LatestBuild/$LatestBuild/$LatestBuild.7z"
+	$uploadresponse = cmd.exe /c curl --location --user "$TokenUsername^:$Token" --upload-file "$BuildDir\$LatestBuild.7z" "$GitlabPrivateIP/api/v4/projects/$GitProjectID/packages/$PackageType/$LatestBuild/$LatestBuild/$LatestBuild.7z"
 
+	# ---------------------------------------------
+	# Check exit code from curl
+	# ---------------------------------------------
 	if ($LASTEXITCODE -ne 0) {
-		throw "Build upload failed."
+	    throw "Build upload failed (curl returned a non-zero exit code)."
+	}
+
+	# ---------------------------------------------
+	# Parse JSON safely
+	# ---------------------------------------------
+	try {
+	    $json = $uploadresponse | ConvertFrom-Json
+	} 
+	catch {
+	    throw "Upload response was not valid JSON: $uploadresponse"
+	}
+
+	# ---------------------------------------------
+	# Validate response message
+	# ---------------------------------------------
+	if ($json.message -eq "201 Created") {
+	    Write-Host "Build uploaded successfully." -ForegroundColor Green
 	}
 	else {
-		Write-Host "Build uploaded successfully." -ForegroundColor Green
+	    throw "Upload failed, server returned message: $($json.message)"
 	}
-
-	Write-Host "Fetching latest package ID for project $GitProjectID ..."
 
 	# ==============================
 	# Get Latest Package
 	# ==============================
+	Write-Host "Fetching latest package ID for project $GitProjectID ..."
+
 	$packagesJson = Invoke-RestMethod -Method Get `
 	    -Headers @{ "PRIVATE-TOKEN" = $TOKEN } `
 	    -Uri "$GitlabPrivateIP/api/v4/projects/$GitProjectID/packages?package_type=$PackageType&order_by=created_at&sort=desc&per_page=1" `
