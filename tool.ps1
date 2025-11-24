@@ -157,7 +157,7 @@ function Publish-Build {
 	$GitlabPublicIP  = $env:GITLAB_PUBLIC_IP
 	$GitlabPrivateIP = $env:GITLAB_PRIVATE_IP
 	$GitProjectID    = $env:GIT_PROJECT_ID
-	$GitGroupName    = $env:GIT_GROUP_NAME
+	$GitNamespace    = $env:GIT_NAMESPACE
 	$GitProjectName  = $env:GIT_PROJECT_NAME
 	$ReleaseDesc     = "Automated release via CI/CD"
 	$PackageType     = "generic"
@@ -219,7 +219,7 @@ function Publish-Build {
 	$PackageFilename = $filesJson[0].file_name
 	$PackageFileID  = $filesJson[0].id
 
-	$PackageURL = "$GitlabPublicIP/$GitGroupName/$GitProjectName/-/package_files/$PackageFileID/download"
+	$PackageURL = "$GitlabPublicIP/$GitNamespace/$GitProjectName/-/package_files/$PackageFileID/download"
 
 	Write-Host "Package file name: $PackageFilename" -ForegroundColor Yellow
 	Write-Host "Package file ID:   $PackageFileID" -ForegroundColor Yellow
