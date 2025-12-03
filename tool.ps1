@@ -36,9 +36,21 @@ if (Test-Path $envFile) {
 #   CORE FUNCTIONS
 # ================================
 function Run-CICD { 
-	Write-Output "Running CI/CD..." 
-	$NewCommits = Pull-LatestCommits
-	if ($NewCommits -eq $true) {
+	Write-Output "Running CI/CD..."
+
+	# ================================
+	#   CHECK FOR NEW COMMITS 
+	#   TODO: GET RID OF THIS! IT'S A SHITTY BAND-AID FIX FOR A DIFFERENT WEIRD PROBLEM WITH RETURNING VALUES
+	# ================================
+	Push-Location $env:REPO_DIRECTORY
+	$branch = git rev-parse --abbrev-ref HEAD 2>$null
+	$branch = $branch.Trim()
+	$behind = git rev-list "HEAD..origin/$branch" --count 2>$null
+	$behind = [int]$behind
+	Pop-Location
+
+	if ($behind -gt 0) {
+		Pull-LatestCommits
 		Build-Project
 		Publish-Build
 	}
@@ -290,7 +302,6 @@ function Pull-LatestCommits {
 
 	if (-not $branch) {
 	    Write-Host "Could not determine current branch." -ForegroundColor Red
-	    return 0
 		Pop-Location
 	}
 	# ==============================
@@ -304,11 +315,9 @@ function Pull-LatestCommits {
 		git fetch
 		git pull
 		Pop-Location
-		return $true | Out-Null
 	} else {
 	    Write-Host "No new commits available." -ForegroundColor Yellow
 	    Pop-Location
-		return $false | Out-Null
 	}
 }
 function Revert-PreviousCommit {
