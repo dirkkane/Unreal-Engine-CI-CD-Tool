@@ -36,26 +36,16 @@ if (Test-Path $envFile) {
 #   CORE FUNCTIONS
 # ================================
 function Run-CICD { 
-	Write-Output "Running CI/CD..."
+	Write-Host "Running CI/CD..."
 
-	# ================================
-	#   CHECK FOR NEW COMMITS 
-	#   TODO: GET RID OF THIS! IT'S A SHITTY BAND-AID FIX FOR A DIFFERENT WEIRD PROBLEM WITH RETURNING VALUES
-	# ================================
-	Push-Location $env:REPO_DIRECTORY
-	$branch = git rev-parse --abbrev-ref HEAD 2>$null
-	$branch = $branch.Trim()
-	$behind = git rev-list "HEAD..origin/$branch" --count 2>$null
-	$behind = [int]$behind
-	Pop-Location
+	$newCommits = Pull-LatestCommits
 
-	if ($behind -gt 0) {
-		Pull-LatestCommits
+	if ($newCommits) {
 		Build-Project
 		Publish-Build
 	}
 	else {
-		Write-Host "No new commits available, stopping..." -ForegroundColor Yellow
+		Write-Host "Stopping..." -ForegroundColor Yellow
 	}
 }
 function Build-Project { 
@@ -159,7 +149,7 @@ function Build-Project {
 	Pop-Location
 	}
 function Publish-Build { 
-	Write-Output "Publishing build..." 
+	Write-Host "Publishing build..." 
 	# ---------------------------------------------
 	# Load variables
 	# ---------------------------------------------
@@ -293,7 +283,7 @@ function Publish-Build {
 }
 function Pull-LatestCommits {
 	Push-Location $env:REPO_DIRECTORY
-    Write-Output "Pulling latest commits..."
+    Write-Host "Pulling latest commits..."
 	# ==============================
 	# Get current branch name
 	# ==============================
@@ -304,30 +294,36 @@ function Pull-LatestCommits {
 	    Write-Host "Could not determine current branch." -ForegroundColor Red
 		Pop-Location
 	}
+	
 	# ==============================
 	# Count how many commits local is behind remote
 	# ==============================
-	$behind = git rev-list "HEAD..origin/$branch" --count 2>$null
-	$behind = [int]$behind
+	try {
+		git fetch origin | Out-Null
+		$behind = git rev-list "HEAD..origin/$branch" --count
 
-	if ($behind -gt 0) {
-	    Write-Host "New commits are available on origin/$branch." -ForegroundColor Yellow
-		git fetch
-		git pull
-		Pop-Location
-	} else {
-	    Write-Host "No new commits available." -ForegroundColor Yellow
-	    Pop-Location
+		if ($behind -gt 0) {
+		    Write-Host "New commits are available on origin/$branch." -ForegroundColor Yellow
+			git pull origin $branch
+			return $true | Out-Null
+		} else {
+		    Write-Host "No new commits available." -ForegroundColor Yellow
+			return $false | Out-Null
+		}
 	}
+	finally {
+		Pop-Location
+	}
+
 }
 function Revert-PreviousCommit {
-    Write-Output "Reverting to previous commit..."
+    Write-Host "Reverting to previous commit..."
     Push-Location $env:REPO_DIRECTORY
 	git reset --hard HEAD~1
 	Pop-Location
 }
 function Quit-Tool {
-    Write-Output "Exiting tool..."
+    Write-Host "Exiting tool..."
     Stop-Transcript | Out-Null
     exit
 }
@@ -369,7 +365,7 @@ function Handle-MenuSelection {
         "4" { Pull-LatestCommits }
         "5" { Revert-PreviousCommit }
         "6" { Quit-Tool }
-        default { Write-Output "Invalid selection." }
+        default { Write-Host "Invalid selection." }
     }
     Write-Host ""
     Write-Host "     .--."
@@ -388,7 +384,7 @@ function Handle-MenuSelection {
 #   ARGUMENT MODE
 # ================================
 if ($args.Count -gt 0) {
-    Write-Output "Arguments passed: $args"
+    Write-Host "Arguments passed: $args"
 
     foreach ($arg in $args) {
         switch ($arg.ToLower()) {
@@ -397,7 +393,7 @@ if ($args.Count -gt 0) {
             "publish"     { Publish-Build }
             "pull"        { Pull-LatestCommits }
             "revert"      { Revert-PreviousCommit }
-            default       { Write-Output "Unknown argument: $arg" }
+            default       { Write-Host "Unknown argument: $arg" }
         }
     }
 
