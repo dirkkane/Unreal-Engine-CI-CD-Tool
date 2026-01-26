@@ -49,6 +49,9 @@ function Run-CICD {
 	}
 }
 function Build-Project { 
+    param (
+        [string]$BuildType
+    )
 	# ---------------------------------------------
 	# Load variables
 	# ---------------------------------------------
@@ -87,7 +90,7 @@ function Build-Project {
 	# ---------------------------------------------
 	# Generate build name
 	# ---------------------------------------------
-	$BuildName = $ProjectName + "_" + $timestamp + "_" + $hash
+	$BuildName = $ProjectName + "_" + $BuildType + "_" + $timestamp + "_" + $hash
 	Write-Host "Build Name: $BuildName" -ForegroundColor Yellow
 	
 	# ---------------------------------------------
@@ -99,36 +102,39 @@ function Build-Project {
 	Write-Host "Using project: $uproject" -ForegroundColor Yellow
 	Write-Host ""
 	
-	cmd.exe /c "`"$UAT`" -ScriptsForProject=`"$uproject`" Turnkey -command=VerifySdk -platform=Win64 -UpdateIfNeeded -EditorIO -EditorIOPort=53614 -project=`"$uproject`" BuildCookRun -nop4 -utf8output -nocompileeditor -skipbuildeditor -cook -project=`"$uproject`" -target=$ProjectName -unrealexe=`"$UnrealExe`" -platform=Win64 -installed -stage -archive -package -build -pak -iostore -compressed -prereqs -archivedirectory=`"$BuildDir`" -distribution -clientconfig=Shipping -nodebuginfo -nocompile -nocompileuat"
+	cmd.exe /c "`"$UAT`" -ScriptsForProject=`"$uproject`" Turnkey -command=VerifySdk -platform=Win64 -UpdateIfNeeded -EditorIO -EditorIOPort=53614 -project=`"$uproject`" BuildCookRun -nop4 -utf8output -nocompileeditor -skipbuildeditor -cook -project=`"$uproject`" -target=$ProjectName -unrealexe=`"$UnrealExe`" -platform=Win64 -installed -stage -archive -package -build -pak -iostore -compressed -prereqs -archivedirectory=`"$BuildDir`" -distribution -clientconfig=$BuildType -nodebuginfo -nocompile -nocompileuat"
 	
 	if ($LASTEXITCODE -ne 0) {
 		throw "UAT build failed."
 	}
 	
-	# ---------------------------------------------
-	# Cleanup Unwanted Files
-	# ---------------------------------------------
-	Write-Host "Cleaning up unwanted files..." -ForegroundColor Yellow
-	
-	# ---------------------------------------------
-	# Remove .txt in Windows folder
-	# ---------------------------------------------
-	Get-ChildItem "$BuildDir\Windows" -Filter *.txt -Recurse -Force -ErrorAction SilentlyContinue |
-		Remove-Item -Force -ErrorAction SilentlyContinue
+	if ($BuildType -eq "Shipping"){
+		# ---------------------------------------------
+		# Cleanup Unwanted Files
+		# ---------------------------------------------
+		Write-Host "Cleaning up unwanted files..." -ForegroundColor Yellow
 		
-	# ---------------------------------------------
-	# Remove Extras folder
-	# ---------------------------------------------
-	$extras = "$BuildDir\Windows\Engine\Extras"
-	if (Test-Path $extras) {
-		Remove-Item $extras -Recurse -Force -ErrorAction SilentlyContinue
+		# ---------------------------------------------
+		# Remove .txt in Windows folder
+		# ---------------------------------------------
+		Get-ChildItem "$BuildDir\Windows" -Filter *.txt -Recurse -Force -ErrorAction SilentlyContinue |
+			Remove-Item -Force -ErrorAction SilentlyContinue
+			
+		# ---------------------------------------------
+		# Remove Extras folder
+		# ---------------------------------------------
+		$extras = "$BuildDir\Windows\Engine\Extras"
+		if (Test-Path $extras) {
+			Remove-Item $extras -Recurse -Force -ErrorAction SilentlyContinue
+		}
+		
+		# ---------------------------------------------
+		# Remove PDB files
+		# ---------------------------------------------
+		Get-ChildItem "$BuildDir\Windows" -Filter *.pdb -Recurse -Force -ErrorAction SilentlyContinue |
+			Remove-Item -Force -ErrorAction SilentlyContinue
 	}
 	
-	# ---------------------------------------------
-	# Remove PDB files
-	# ---------------------------------------------
-	Get-ChildItem "$BuildDir\Windows" -Filter *.pdb -Recurse -Force -ErrorAction SilentlyContinue |
-		Remove-Item -Force -ErrorAction SilentlyContinue
 		
 	# ---------------------------------------------
 	# Archive build
@@ -347,11 +353,12 @@ function Show-Menu {
     Write-Host ""
     Write-Host "Available options:"
     Write-Host "	1 - Run CI/CD (If New Commits Are Available: Pull, Build, & Publish)"
-    Write-Host "	2 - Build Project"
-    Write-Host "	3 - Publish Latest Build"
-    Write-Host "	4 - Pull Latest Commits"
-    Write-Host "	5 - Revert To Previous Commit"
-    Write-Host "	6 - Quit"
+    Write-Host "	2 - Build Project (Shipping)"
+    Write-Host "	3 - Build Project (Debug)"
+    Write-Host "	4 - Publish Latest Build"
+    Write-Host "	5 - Pull Latest Commits"
+    Write-Host "	6 - Revert To Previous Commit"
+    Write-Host "	7 - Quit"
     Write-Host ""
 }
 
@@ -360,11 +367,12 @@ function Handle-MenuSelection {
 
     switch ($choice) {
         "1" { Run-CICD }
-        "2" { Build-Project }
-        "3" { Publish-Build }
-        "4" { Pull-LatestCommits }
-        "5" { Revert-PreviousCommit }
-        "6" { Quit-Tool }
+        "2" { Build-Project "Shipping"}
+        "3" { Build-Project "DebugGame"}
+        "4" { Publish-Build }
+        "5" { Pull-LatestCommits }
+        "6" { Revert-PreviousCommit }
+        "7" { Quit-Tool }
         default { Write-Host "Invalid selection." }
     }
     Write-Host ""
@@ -389,7 +397,8 @@ if ($args.Count -gt 0) {
     foreach ($arg in $args) {
         switch ($arg.ToLower()) {
             "cicd"        { Run-CICD }
-            "build"       { Build-Project }
+            "build"       { Build-Project "Shipping"}
+            "build-debug" { Build-Project "DebugGame"}
             "publish"     { Publish-Build }
             "pull"        { Pull-LatestCommits }
             "revert"      { Revert-PreviousCommit }
