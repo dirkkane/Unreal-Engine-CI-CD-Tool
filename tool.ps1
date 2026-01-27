@@ -41,7 +41,7 @@ function Run-CICD {
 	$newCommits = Pull-LatestCommits
 
 	if ($newCommits) {
-		Build-Project
+		Build-Project "Shipping"
 		Publish-Build
 	}
 	else {
