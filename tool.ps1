@@ -102,7 +102,11 @@ function Build-Project {
 	Write-Host "Using project: $uproject" -ForegroundColor Yellow
 	Write-Host ""
 	
-	cmd.exe /c "`"$UAT`" -ScriptsForProject=`"$uproject`" Turnkey -command=VerifySdk -platform=Win64 -UpdateIfNeeded -EditorIO -EditorIOPort=53614 -project=`"$uproject`" BuildCookRun -nop4 -utf8output -nocompileeditor -skipbuildeditor -cook -project=`"$uproject`" -target=$ProjectName -unrealexe=`"$UnrealExe`" -platform=Win64 -installed -stage -archive -package -build -pak -iostore -compressed -prereqs -archivedirectory=`"$BuildDir`" -distribution -clientconfig=$BuildType -nodebuginfo -nocompile -nocompileuat"
+	if ($BuildType -eq "Shipping") {
+		cmd.exe /c "`"$UAT`" -ScriptsForProject=`"$uproject`" Turnkey -command=VerifySdk -platform=Win64 -UpdateIfNeeded -EditorIO -EditorIOPort=53614 -project=`"$uproject`" BuildCookRun -nop4 -utf8output -nocompileeditor -skipbuildeditor -cook -project=`"$uproject`" -target=$ProjectName -unrealexe=`"$UnrealExe`" -platform=Win64 -installed -stage -archive -package -build -pak -iostore -compressed -prereqs -archivedirectory=`"$BuildDir`" -distribution -clientconfig=$BuildType -nodebuginfo -nocompile -nocompileuat -CrashReporter"
+	} else {
+		cmd.exe /c "`"$UAT`" -ScriptsForProject=`"$uproject`" Turnkey -command=VerifySdk -platform=Win64 -UpdateIfNeeded -EditorIO -EditorIOPort=53614 -project=`"$uproject`" BuildCookRun -nop4 -utf8output -nocompileeditor -skipbuildeditor -cook -project=`"$uproject`" -target=$ProjectName -unrealexe=`"$UnrealExe`" -platform=Win64 -installed -stage -archive -package -build -pak -iostore -compressed -prereqs -archivedirectory=`"$BuildDir`" -distribution -clientconfig=$BuildType -nocompile -nocompileuat -CrashReporter" 
+	}
 	
 	if ($LASTEXITCODE -ne 0) {
 		throw "UAT build failed."
