@@ -109,6 +109,7 @@ function Build-Project {
 	}
 	
 	if ($LASTEXITCODE -ne 0) {
+		Pop-Location
 		throw "UAT build failed."
 	}
 	
@@ -197,6 +198,7 @@ function Publish-Build {
 	# Check exit code from curl
 	# ---------------------------------------------
 	if ($LASTEXITCODE -ne 0) {
+		Pop-Location
 	    throw "Build upload failed (curl returned a non-zero exit code)."
 	}
 
@@ -207,6 +209,7 @@ function Publish-Build {
 	    $json = $uploadresponse | ConvertFrom-Json
 	} 
 	catch {
+		Pop-Location
 	    throw "Upload response was not valid JSON: $uploadresponse"
 	}
 
@@ -217,6 +220,7 @@ function Publish-Build {
 	    Write-Host "Build uploaded successfully." -ForegroundColor Green
 	}
 	else {
+		Pop-Location
 	    throw "Upload failed, server returned message: $($json.message)"
 	}
 
@@ -235,6 +239,7 @@ function Publish-Build {
 	$PackageID = $packagesJson[0].id
 
 	if ([string]::IsNullOrWhiteSpace($PackageID)) {
+		Pop-Location
 		throw "Could not retrieve package ID."
 	    exit 1
 	}
