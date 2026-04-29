@@ -417,7 +417,7 @@ if ($args.Count -gt 0) {
 							Write-Host "	cicd - Fetch latest changes from Git, build the project, archive into a .7z, and publish to GitLab." 
 							Write-Host "	build - Creates a Shipping build of the Unreal project."
 							Write-Host "	build-debug - Creates a DebugGame build of the Unreal project."
-							Write-Host "	publish - Unpload the latest build to GitLab and publish as a release."
+							Write-Host "	publish - Upload the latest build to GitLab and publish as a release."
 							Write-Host "	pull - Fetches and pulls the latest changes from Git."
 							Write-Host "	revert - Reverts local project repo to the previous commit."
 							Write-Host "	help - Prints this help message."}
