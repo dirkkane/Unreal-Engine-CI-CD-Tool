@@ -83,7 +83,7 @@ function Build-Project {
 	Push-Location $RepoDir
 	$hash = (git rev-parse --short HEAD 2>$null).Trim()
 	if (-not $hash) {
-		Write-Warning "Could not retrieve commit hash from Git." -ForegroundColor Yellow
+		Write-Warning "Could not retrieve commit hash from Git."
 	}
 	Pop-Location
 	
