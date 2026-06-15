@@ -8,8 +8,9 @@ Rudimentary GitLab CI/CD pipeline for Unreal Engine projects. It can fetch and r
 Run `tool.ps1` and select the option you want to run.
 
 ### Options
-- Run CI/CD -- Fetch latest changes from Git, build the project, archive into a .7z, and publish to GitLab.
-- Build Project -- Build the Unreal project.
+- Run CI/CD -- Fetch latest changes from Git, make a shipping build of the project, archive into a .7z, and publish to GitLab.
+- Build Project (Shipping) -- Create a shipping build of the Unreal project.
+- Build Project (Debug) -- Create a DebugGame build of the Unreal project.
 - Publish Latest Build -- Upload latest build to GitLab and publish as release.
 - Pull Latest Commits -- Fetch changes from Git.
 - Revert To Previous Commit -- Reverts project repo to the previous commit.
@@ -18,7 +19,8 @@ Run `tool.ps1` and select the option you want to run.
 You can run every option in the tool directly from the command line without launching and making a selection manually, this is most useful in automated deployments:
 
 - Run CI/CD -- `cicd`
-- Build Project -- `build`
+- Build Project (Shipping) -- `build`
+- Build Project (Debug) -- `build-debug`
 - Publish Latest Build -- `publish`
 - Pull Latest Commits -- `pull`
 - Revert To Previous Commit -- `revert`
