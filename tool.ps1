@@ -93,6 +93,12 @@ function Build-Project {
 	$BuildName = $ProjectName + "_" + $BuildType + "_" + $timestamp + "_" + $hash
 	Write-Host "Build Name: $BuildName" -ForegroundColor Yellow
 	
+	Push-Location $RepoDir
+	(Get-Content Config\DefaultGame.ini) `
+	    -replace 'ProjectVersion=.*', "ProjectVersion=$BuildName" |
+	    Set-Content Config\DefaultGame.ini
+	Pop-Location
+	
 	# ---------------------------------------------
 	# Run Unreal Build (UAT)
 	# ---------------------------------------------
