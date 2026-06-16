@@ -148,12 +148,13 @@ function Build-Project {
 	
 	cmd.exe /c "C:\Program Files\7-Zip\7z.exe" a -t7z -m0=lzma2 -mx=9 "$BuildName.7z" ".\Windows"
 
-	Write-Host "Archive created as $BuildName.7z" -ForegroundColor Yellow
-
-	# ---------------------------------------------
-	# Remove Uncompressed Build
-	# ---------------------------------------------
-	Remove-Item -Recurse -Force "$BuildDir\Windows"
+	if ("$BuildName.7z") {
+		Write-Host "Archive created as $BuildName.7z" -ForegroundColor Yellow
+		Remove-Item -Recurse -Force "$BuildDir\Windows"
+	}
+	else {
+		Write-Warning "Archive creation failed. Unarchived build files will not be deleted. Attempting to upload this build WILL FAIL!"
+	}
 	
 	Write-Host "`nBuild completed successfully.`n" -ForegroundColor Green
 	
