@@ -90,7 +90,7 @@ function Build-Project {
 	# ---------------------------------------------
 	# Generate build name
 	# ---------------------------------------------
-	$BuildName = $ProjectName + "_" + $BuildType + "_" + $timestamp + "_" + $hash
+	$BuildName = $timestamp + "_" + $BuildType + "+" + $hash
 	Write-Host "Build Name: $BuildName" -ForegroundColor Yellow
 	
 	Push-Location $RepoDir
@@ -110,19 +110,7 @@ function Build-Project {
 	
 	if ($BuildType -eq "Shipping") {
 		cmd.exe /c "`"$UAT`" -ScriptsForProject=`"$uproject`" Turnkey -command=VerifySdk -platform=Win64 -UpdateIfNeeded -EditorIO -EditorIOPort=53614 -project=`"$uproject`" BuildCookRun -nop4 -utf8output -nocompileeditor -skipbuildeditor -cook -project=`"$uproject`" -target=$ProjectName -unrealexe=`"$UnrealExe`" -platform=Win64 -installed -stage -archive -package -build -pak -iostore -compressed -prereqs -archivedirectory=`"$BuildDir`" -distribution -clientconfig=$BuildType -nodebuginfo -nocompile -nocompileuat -CrashReporter"
-	} else {
-		cmd.exe /c "`"$UAT`" -ScriptsForProject=`"$uproject`" Turnkey -command=VerifySdk -platform=Win64 -UpdateIfNeeded -EditorIO -EditorIOPort=53614 -project=`"$uproject`" BuildCookRun -nop4 -utf8output -nocompileeditor -skipbuildeditor -cook -project=`"$uproject`" -target=$ProjectName -unrealexe=`"$UnrealExe`" -platform=Win64 -installed -stage -archive -package -build -pak -iostore -compressed -prereqs -archivedirectory=`"$BuildDir`" -distribution -clientconfig=$BuildType -nocompile -nocompileuat -CrashReporter" 
-	}
-	
-	if ($LASTEXITCODE -ne 0) {
-		Pop-Location
-		throw "UAT build failed."
-	}
-	
-	if ($BuildType -eq "Shipping"){
-		# ---------------------------------------------
-		# Cleanup Unwanted Files
-		# ---------------------------------------------
+		
 		Write-Host "Cleaning up unwanted files..." -ForegroundColor Yellow
 		
 		# ---------------------------------------------
@@ -144,8 +132,19 @@ function Build-Project {
 		# ---------------------------------------------
 		Get-ChildItem "$BuildDir\Windows" -Filter *.pdb -Recurse -Force -ErrorAction SilentlyContinue |
 			Remove-Item -Force -ErrorAction SilentlyContinue
+	} 
+	elseif ($BuildType -eq "DebugGame") {
+		cmd.exe /c "`"$UAT`" -ScriptsForProject=`"$uproject`" Turnkey -command=VerifySdk -platform=Win64 -UpdateIfNeeded -EditorIO -EditorIOPort=53614 -project=`"$uproject`" BuildCookRun -nop4 -utf8output -nocompileeditor -skipbuildeditor -cook -project=`"$uproject`" -target=$ProjectName -unrealexe=`"$UnrealExe`" -platform=Win64 -installed -stage -archive -package -build -pak -iostore -compressed -prereqs -archivedirectory=`"$BuildDir`" -distribution -clientconfig=$BuildType -nocompile -nocompileuat -CrashReporter" 
+	}
+	else {
+		Pop-Location
+		throw "Unknown build type $BuildType. Stopping..."
 	}
 	
+	if ($LASTEXITCODE -ne 0) {
+		Pop-Location
+		throw "UAT build failed."
+	}
 		
 	# ---------------------------------------------
 	# Archive build
