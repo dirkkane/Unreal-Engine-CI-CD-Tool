@@ -325,6 +325,7 @@ function Pull-LatestCommits {
 
 		if ($behind -gt 0) {
 		    Write-Host "New commits are available on origin/$branch." -ForegroundColor Yellow
+			git restore Config\DefaultGame.ini
 			git pull origin $branch
 			return $true | Out-Null
 		} else {
