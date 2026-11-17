@@ -1,6 +1,6 @@
 # Unreal Engine CI/CD Tool for GitLab
 
-Rudimentary GitLab CI/CD pipeline for Unreal Engine projects. It can fetch and revert commits from your GitLab repository / instance, build your project, package builds into .7z archives, and upload and publish them to your GitLab repository / instance.
+Rudimentary GitLab CI/CD tool for Unreal Engine projects. It can fetch and revert commits from your GitLab repository / instance, build your project, package builds into .7z archives, and upload and publish them to your GitLab repository / instance.
 
 **AI WAS HEAVILY USED TO MAKE THIS**
 
@@ -28,8 +28,7 @@ You can run every option in the tool directly from the command line without laun
 (EX: `.\tool.ps1 revert build publish`)
 
 ### Dependencies
-7zip - God's chosen file archiver
-
+- 7zip
 ### .env Variables
 Fill in the variables in .env with the corresponding values:
 | Variable           | Description                                                                                                                                                                    |
